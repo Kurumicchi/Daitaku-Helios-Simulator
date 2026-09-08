@@ -1,7 +1,8 @@
 <p align="center">
-  <img src="assets/img/Banner.png" alt="Daitaku Helios Banner">
-</p>
 
+  <img src="assets/img/Banner.png" alt="Daitaku Helios Banner">
+
+</p>
 
 # Daitaku Helios Simulator
 
@@ -14,43 +15,84 @@ Proyek tugas mata kuliah Pengolahan Citra dan Video (PCV).
 ## Demo
 
 <p align="left">
+
   <img src="demo/2026-09-04.gif" alt="Daitaku Helios Simulator Demo" width="50%">
+
 </p>
 
 ## Konten
 
-* `src/main.py` — aplikasi utama: webcam, hand tracking, dan game loop.
-* `src/poses.py` — logika deteksi berbagai pose tangan.
+* `src/main.py` — aplikasi utama: webcam, MediaPipe, dan perpindahan game state.
+* `src/states.py` — definisi state permainan.
+* `src/menu.py` — tampilan menu utama.
+* `src/game.py` — logika gameplay, pose yang diminta, pose yang terdeteksi, dan game rendering.
+* `src/poses.py` — logika deteksi berbagai pose.
 * `src/audio.py` — pemutaran efek suara.
 * `models/hand_landmarker.task` — model hand tracking dari MediaPipe.
 * `models/pose_landmarker.task` — model pose tracking dari MediaPipe.
-* `assets/helios/` — gambar referensi pose Daitaku Helios.
+* `assets/img/` — gambar referensi pose Daitaku Helios dan aset visual lainnya.
 * `assets/audio/` — efek suara dan audio game.
 * `demo/` — video demo project.
 
 ## Test
 
+Aktifkan virtual environment:
+
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
+
+Jalankan program:
 
 ```powershell
 python src/main.py
 ```
 
-Aplikasi akan membuka webcam dan mendeteksi tangan pemain.
+Aplikasi akan membuka webcam dan menjalankan game.
+
+Pada menu utama, tekan `z` untuk memulai permainan.
 
 Tekan `q` pada window untuk keluar.
 
 ## Teknologi
 
-| Nama         | Fungsi                              |
-| ------------ | ----------------------------------- |
-| Python 3.13  | Bahasa pemrograman                  |
-| OpenCV       | Webcam dan pemrosesan gambar        |
-| MediaPipe    | Hand & Upper-body pose tracking     |
-| Pygame       | Pemutaran audio                     |
-| Git / GitHub | Version control                     |
+| Nama         | Fungsi                                   |
+| ------------ | ---------------------------------------- |
+| Python 3.13  | Bahasa pemrograman                       |
+| OpenCV       | Webcam, pemrosesan gambar, dan rendering |
+| MediaPipe    | Hand & upper-body pose tracking          |
+| Pygame       | Pemutaran audio                          |
+| Git / GitHub | Version control                          |
+
+## Struktur Game
+
+Game menggunakan sistem state untuk memisahkan menu dan gameplay.
+
+State yang tersedia saat ini:
+
+```text
+MENU
+  ↓
+PLAYING
+```
+
+`main.py` bertugas mengatur state aktif, sedangkan masing-masing state memiliki tanggung jawabnya sendiri.
+
+Alur utama program:
+
+```text
+main.py
+   │
+   ├── MENU
+   │     └── menu.py
+   │
+   └── PLAYING
+         └── game.py
+                │
+                ├── poses.py
+                │
+                └── Pose Matching
+```
 
 ## Cara Kerja
 
@@ -71,22 +113,46 @@ MediaPipe Pose Landmarker
    ↓
 Pose Detection
    ↓
+Detected Pose
+   ↓
 Pose Matching
    ↓
-Score / Game Response
+Game Response
 ```
 
-MediaPipe mendeteksi hingga dua tangan dan menghasilkan 21 landmark untuk masing-masing tangan.
+MediaPipe Hand Landmarker mendeteksi hingga dua tangan dan menghasilkan 21 landmark untuk masing-masing tangan.
 
 MediaPipe Pose Landmarker mendeteksi 33 landmark tubuh. Pada project ini, landmark yang digunakan untuk pengenalan pose hanya bagian upper body, yaitu:
-- Left shoulder
-- Right shoulder
-- Left elbow
-- Right elbow
-- Left wrist
-- Right wrist
 
-Landmark tersebut kemudian digunakan untuk mengenali bentuk tangan, seperti posisi jari terbuka atau terlipat. Sedangkan landmark shoulder, elbow, dan wrist digunakan untuk mengenali posisi serta bentuk gerakan lengan.
+* Left shoulder
+* Right shoulder
+* Left elbow
+* Right elbow
+* Left wrist
+* Right wrist
+
+Landmark tangan digunakan untuk mengenali bentuk jari, seperti posisi jari terbuka atau terlipat.
+
+Landmark shoulder, elbow, dan wrist digunakan untuk mengenali posisi serta bentuk gerakan lengan.
+
+Hasil deteksi kemudian dikembalikan sebagai nama pose, misalnya:
+
+```text
+"helios_peace"
+"gyaru_peace"
+```
+
+`game.py` kemudian membandingkan pose yang terdeteksi dengan pose yang sedang diminta oleh game.
+
+```text
+poses.py
+    ↓
+detected_pose
+    ↓
+game.py
+    ↓
+expected_pose == detected_pose
+```
 
 ## Pose yang Sudah Didukung
 
@@ -105,17 +171,21 @@ Pose khas Daitaku Helios dengan dua tangan membentuk peace terbalik.
 
 * Dua tangan harus terdeteksi
 * Kedua tangan harus membentuk upside-down peace
-* Jika kondisi terpenuhi, pose dianggap berhasil
+* Jika kondisi terpenuhi, pose dianggap terdeteksi
 
 ### Helios Peace
 
 Pose peace khas Daitaku Helios menggunakan tangan kanan dengan tambahan posisi lengan.
 
 <p align="left">
-  <img src="assets/img/Peace.png" alt="Daitaku Helios Banner" width="30%">
+
+  <img src="assets/img/Peace.png" alt="Daitaku Helios Peace" width="30%">
+
 </p>
 
-* Tangan kanan harus membentuk Helios Peace (Thumb, index, dan middle finger terbuka, ring dan pinky terlipat)
+* Tangan kanan harus membentuk Helios Peace
+* Thumb, index, dan middle finger terbuka
+* Ring dan pinky terlipat
 * Upper arm harus mengarah keluar dari shoulder
 * Forearm ditekuk kembali ke arah shoulder
 * Hand pose dan arm pose harus terpenuhi secara bersamaan
@@ -134,3 +204,10 @@ Pose peace khas Daitaku Helios menggunakan tangan kanan dengan tambahan posisi l
 * **Upper-body tracking.** Menggunakan landmark shoulder, elbow, dan wrist untuk tracking posisi lengan tanpa menggunakan full-body pose.
 * **Handedness detection.** Menambahkan pengecekan tangan kanan menggunakan informasi handedness dari MediaPipe.
 * **Arm pose detection.** Menambahkan pengecekan posisi shoulder, elbow, dan wrist untuk memastikan bentuk lengan sesuai dengan pose Helios.
+
+### 2026-09-08
+
+* **Game state system.** Menambahkan `GameState` untuk memisahkan menu dan gameplay.
+* **Main menu.** Membuat menu awal dengan instruksi untuk memulai permainan.
+* **Game rendering.** Membuat canvas game berukuran 1280×720 yang menampilkan webcam dan gambar referensi pose Helios secara berdampingan.
+* **Pose matching.** Menghubungkan hasil deteksi dari `poses.py` dengan `game.py` untuk membandingkan pose pemain dengan pose yang sedang diminta.
